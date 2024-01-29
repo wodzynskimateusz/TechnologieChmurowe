@@ -49,6 +49,28 @@ class PeopleCounterDynamicUrl(Resource):
         return {'peopleCount': counter}
 
 
+@app.route('/send', methods=['GET', 'POST'])
+def upload_file():
+    if request.method == 'POST':
+        file = request.files['file']
+        if file:
+            file_type = file.filename.rsplit('.', 1)[1].lower()
+            file_name = f'send.{file_type}'
+            file.save(file_name)
+            counter = count_people(file_name)
+            return {'peopleCount': counter}
+
+    return '''
+    <!doctype html>
+    <title>Upload new Filess</title>
+    <h1>Upload new File</h1>
+    <form method=post enctype=multipart/form-data>
+      <input type=file name=file>
+      <input type=submit value=Upload>
+    </form>
+    '''
+
+
 api.add_resource(PeopleCounterStatic, '/')
 api.add_resource(PeopleCounterDynamicUrl, '/dynamic')
 
