@@ -1,6 +1,6 @@
 import cv2
 import requests
-from flask import Flask, request
+from flask import Flask, request, make_response
 from flask_restful import Resource, Api
 
 app = Flask(__name__)
@@ -49,30 +49,35 @@ class PeopleCounterDynamicUrl(Resource):
         return {'peopleCount': counter}
 
 
-@app.route('/send', methods=['GET', 'POST'])
-def upload_file():
-    if request.method == 'POST':
+class PeopleCounterSend(Resource):
+    def get(self):
+        form = '''<!doctype html>
+        <title>Upload new Filess</title>
+        <h1>Upload new File</h1>
+        <form method=post enctype=multipart/form-data>
+          <input type=file name=file>
+          <input type=submit value=Upload>
+        </form>'''
+        response = make_response(form)
+        response.headers['Content-Type'] = 'text/html; charset=utf-8'
+        return response
+
+    def post(self):
         file = request.files['file']
         if file:
+            # save photo
             file_type = file.filename.rsplit('.', 1)[1].lower()
             file_name = f'send.{file_type}'
             file.save(file_name)
+
+            # count people
             counter = count_people(file_name)
             return {'peopleCount': counter}
-
-    return '''
-    <!doctype html>
-    <title>Upload new Filess</title>
-    <h1>Upload new File</h1>
-    <form method=post enctype=multipart/form-data>
-      <input type=file name=file>
-      <input type=submit value=Upload>
-    </form>
-    '''
 
 
 api.add_resource(PeopleCounterStatic, '/')
 api.add_resource(PeopleCounterDynamicUrl, '/dynamic')
+api.add_resource(PeopleCounterSend, '/send')
 
 if __name__ == '__main__':
     app.run(debug=True)
